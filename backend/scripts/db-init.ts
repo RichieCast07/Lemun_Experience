@@ -23,8 +23,8 @@ async function main() {
   const admin = new URL(env.DATABASE_URL);
   admin.pathname = "/postgres";
   const adminClient = new pg.Client({ connectionString: admin.toString() });
-  await adminClient.connect();
   try {
+    await adminClient.connect();
     const exists = await adminClient.query("SELECT 1 FROM pg_database WHERE datname = $1", [dbName]);
     if (exists.rowCount === 0) {
       // En Windows el clúster suele nacer en WIN1252; para forzar UTF8 hay que partir de template0.
@@ -40,8 +40,13 @@ async function main() {
     } else {
       console.log(`[lumen] Base de datos "${dbName}" ya existe.`);
     }
+  } catch (err) {
+    // Hostings gestionados (Railway, etc.) ya traen la base creada y a veces no dejan entrar a "postgres".
+    console.warn(
+      `[lumen] No se pudo revisar/crear la base (${err instanceof Error ? err.message : err}). Se asume que "${dbName}" ya existe.`
+    );
   } finally {
-    await adminClient.end();
+    await adminClient.end().catch(() => undefined);
   }
 
   // 2) Aplicar el esquema
