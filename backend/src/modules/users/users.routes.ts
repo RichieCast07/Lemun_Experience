@@ -19,12 +19,13 @@ const usernameSchema = z
   .max(60)
   .regex(/^[a-zA-Z0-9._-]+$/, "Solo letras, números, punto, guion y guion bajo");
 
-// La política completa (largo, claves comunes, usuario dentro de la clave) se aplica en superRefine.
+// La política (depende del rol: ver lib/password.ts) se aplica en superRefine al crear
+// y dentro del handler al editar, donde ya se conoce el rol y el usuario actuales.
 const passwordSchema = z.string().max(PASSWORD_MAX, `La contraseña no puede pasar de ${PASSWORD_MAX} caracteres`);
 
-function checkPassword(data: { password?: string; username?: string }, ctx: z.RefinementCtx) {
+function checkPassword(data: { password?: string; username?: string; rol?: string }, ctx: z.RefinementCtx) {
   if (data.password === undefined) return;
-  const reason = weakPasswordReason(data.password, data.username);
+  const reason = weakPasswordReason(data.password, data.username, data.rol);
   if (reason) ctx.addIssue({ code: "custom", path: ["password"], message: reason });
 }
 
@@ -48,8 +49,7 @@ const updateSchema = z
     rol: z.enum(ROLES),
     comision_porcentaje: z.coerce.number().min(0).max(100),
   })
-  .partial()
-  .superRefine(checkPassword);
+  .partial();
 
 usersRouter.get("/", async (req, res) => {
   const rol = req.query.rol ? parse(z.enum(ROLES), String(req.query.rol).toUpperCase()) : null;
@@ -100,11 +100,19 @@ usersRouter.put("/:id", async (req, res) => {
     if (clash) throw AppError.conflict("Ese nombre de usuario ya está en uso");
   }
 
-  // Si cambian la clave sin mandar el usuario, se compara contra el usuario actual de la cuenta.
-  if (data.password && !data.username) {
-    const current = await queryOne<{ username: string }>(`SELECT username FROM usuarios WHERE id = $1`, [id]);
-    const reason = current ? weakPasswordReason(data.password, current.username) : null;
-    if (reason) throw AppError.badRequest(reason);
+  // La política de contraseña depende del rol final de la cuenta (el que llega o, si no, el actual).
+  if (data.password || data.rol) {
+    const current = await queryOne<{ username: string; rol: string }>(`SELECT username, rol FROM usuarios WHERE id = $1`, [id]);
+    if (!current) throw AppError.notFound("Usuario no encontrado");
+    const finalRol = data.rol ?? current.rol;
+    // Quien pasa a administrador debe estrenar una contraseña que cumpla la política estricta.
+    if (finalRol === "ADMIN" && current.rol !== "ADMIN" && !data.password) {
+      throw AppError.badRequest("Para hacer administrador a alguien, asígnale una contraseña nueva (mínimo 12 caracteres)");
+    }
+    if (data.password) {
+      const reason = weakPasswordReason(data.password, data.username ?? current.username, finalRol);
+      if (reason) throw AppError.badRequest(reason);
+    }
   }
 
   const hash = data.password ? await bcrypt.hash(data.password, BCRYPT_ROUNDS) : null;
