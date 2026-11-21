@@ -1,0 +1,19 @@
+# PostgreSQL opcional para desarrollo (si no quieres usar el Postgres instalado en tu equipo).
+#   docker compose up -d
+# Luego en backend/.env:
+#   DATABASE_URL=postgres://lumen:lumen_dev@localhost:5440/lumen_db
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: lumen
+      POSTGRES_PASSWORD: lumen_dev
+      POSTGRES_DB: lumen_db
+    ports:
+      - "5440:5432"
+    volumes:
+      - lumen_pgdata:/var/lib/postgresql/data
+
+volumes:
+  lumen_pgdata:

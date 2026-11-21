@@ -1,0 +1,132 @@
+/* =========================================================
+   Layout: cabecera con píldoras, login, escáner, boleto público
+   ========================================================= */
+
+/* ── Logo (Cinzel solo aquí) ────────────────────────────── */
+.logo { display: inline-flex; align-items: center; gap: 12px; color: var(--logo-ink, var(--ink)); }
+.logo-mark { flex: none; }
+.logo-text { display: flex; flex-direction: column; line-height: 1; }
+.logo-word {
+  font-family: var(--font-brand); font-weight: 500; letter-spacing: 0.22em; text-indent: 0.22em;
+  color: var(--logo-ink, var(--ink));
+}
+.logo-tag { margin-top: 7px; font-size: 0.58em; letter-spacing: 0.34em; text-transform: uppercase; color: var(--logo-tag, var(--text-muted)); font-family: var(--font-brand); }
+.logo-sm .logo-word { font-size: 1.1rem; } .logo-sm .logo-mark { height: 28px; }
+.logo-md .logo-word { font-size: 1.6rem; }  .logo-md .logo-mark { height: 40px; }
+.logo-lg { flex-direction: column; gap: 16px; }
+.logo-lg .logo-text { align-items: center; }
+.logo-lg .logo-word { font-size: 3rem; } .logo-lg .logo-mark { height: 64px; }
+.logo-lg .logo-tag { font-size: 0.7rem; margin-top: 12px; }
+
+/* ── Shell: cabecera superior ───────────────────────────── */
+.shell { min-height: 100vh; display: flex; flex-direction: column; }
+
+.topnav {
+  position: sticky; top: 0; z-index: 40; height: var(--header-h);
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px;
+  padding: 0 max(32px, calc((100vw - var(--content-max)) / 2 + 32px)); background: rgba(250, 250, 250, 0.85); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line);
+}
+.topnav .logo { justify-self: start; }
+
+.pillnav {
+  display: inline-flex; align-items: center; gap: 2px; padding: 4px;
+  background: var(--surface); border: 1px solid var(--line-strong); border-radius: 999px;
+}
+.pillnav a {
+  display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 16px; border-radius: 999px;
+  color: var(--text-muted); font-size: 0.85rem; font-weight: 500; transition: background 0.15s, color 0.15s;
+}
+.pillnav a svg { opacity: 0.8; }
+.pillnav a:hover { color: var(--text); background: var(--surface-2); }
+.pillnav a.active { background: #0b0b0c; color: #fafafa; }
+.pillnav a.active svg { color: var(--gold-bright); opacity: 1; }
+
+.user-box { justify-self: end; display: flex; align-items: center; gap: 12px; }
+.avatar {
+  flex: none; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center;
+  font-size: 0.78rem; font-weight: 600; color: #fafafa; background: #0b0b0c;
+}
+.user-box .who { min-width: 0; line-height: 1.25; }
+.user-box .name { font-size: 0.85rem; font-weight: 500; color: var(--text); max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.user-box .role { font-size: 0.72rem; color: var(--text-faint); }
+
+.main { flex: 1; min-width: 0; }
+.main-inner { max-width: var(--content-max); margin: 0 auto; padding: 44px 32px 88px; }
+
+.topbar { display: none; }
+.bottom-nav { display: none; }
+
+@media (max-width: 900px) {
+  .topnav { display: none; }
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 40;
+    height: 58px; padding: 0 16px; background: rgba(250, 250, 250, 0.9); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line);
+  }
+  .main-inner { padding: 24px 16px calc(100px + var(--safe-bottom)); }
+  .bottom-nav {
+    display: flex; position: fixed; left: 12px; right: 12px; bottom: calc(10px + var(--safe-bottom)); z-index: 40; padding: 6px;
+    background: #0b0b0c; border-radius: 22px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  }
+  .bottom-nav a {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px;
+    color: #8f8f94; font-size: 0.66rem; font-weight: 500; border-radius: 16px;
+  }
+  .bottom-nav a.active { color: #fafafa; background: rgba(255, 255, 255, 0.08); }
+  .bottom-nav a.active svg { color: var(--gold-bright); }
+  h1 { font-size: 1.55rem; }
+}
+
+/* ── Pantallas oscuras: login y boleto público (como la 2.ª referencia) ── */
+.auth-screen, .public-screen {
+  --logo-ink: #fafafa; --logo-tag: #a3a3a8; --ticket-hole: #0a0a0b;
+  position: relative; overflow: hidden; background: #0a0a0b; color: #fafafa;
+}
+.auth-screen::before, .public-screen::before {
+  /* retícula sutil + brillo dorado muy tenue */
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(55% 45% at 50% 0%, rgba(255, 255, 255, 0.10), transparent 70%),
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px) 0 0 / 56px 56px,
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px) 0 0 / 56px 56px;
+  mask-image: radial-gradient(80% 70% at 50% 30%, #000 40%, transparent 100%);
+  -webkit-mask-image: radial-gradient(80% 70% at 50% 30%, #000 40%, transparent 100%);
+}
+.auth-screen { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
+.auth-card { position: relative; width: min(420px, 100%); display: flex; flex-direction: column; align-items: center; gap: 36px; }
+.auth-form { width: 100%; display: flex; flex-direction: column; gap: 18px; }
+.auth-panel { width: 100%; padding: 30px; border-radius: var(--radius-lg); background: var(--surface); color: var(--text); box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5); }
+.divider-title { font-size: 1.35rem; font-weight: 500; letter-spacing: -0.02em; color: var(--text); }
+.auth-foot { text-align: center; font-size: 0.78rem; color: #8f8f94; }
+
+/* ── Escáner ────────────────────────────────────────────── */
+.scanner-layout { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 900px) { .scanner-layout { grid-template-columns: 1fr; } }
+
+.camera-frame {
+  position: relative; aspect-ratio: 4 / 3; border-radius: var(--radius-lg); overflow: hidden;
+  background: #0b0b0c; border: 1px solid #0b0b0c; display: grid; place-items: center;
+}
+.camera-frame video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.camera-frame .reticle { position: absolute; inset: 18%; pointer-events: none; }
+.camera-frame .reticle i { position: absolute; width: 28px; height: 28px; border: 2px solid var(--gold-bright); }
+.camera-frame .reticle i:nth-child(1) { top: 0; left: 0; border-right: 0; border-bottom: 0; border-top-left-radius: 8px; }
+.camera-frame .reticle i:nth-child(2) { top: 0; right: 0; border-left: 0; border-bottom: 0; border-top-right-radius: 8px; }
+.camera-frame .reticle i:nth-child(3) { bottom: 0; left: 0; border-right: 0; border-top: 0; border-bottom-left-radius: 8px; }
+.camera-frame .reticle i:nth-child(4) { bottom: 0; right: 0; border-left: 0; border-top: 0; border-bottom-right-radius: 8px; }
+.camera-frame .scan-line { position: absolute; left: 18%; right: 18%; height: 2px; background: linear-gradient(90deg, transparent, var(--gold-bright), transparent); animation: scan 2.4s ease-in-out infinite; }
+@keyframes scan { 0%, 100% { top: 20%; } 50% { top: 80%; } }
+.camera-idle { position: relative; display: flex; flex-direction: column; align-items: center; gap: 12px; color: #a3a3a8; text-align: center; padding: 20px; }
+
+.result-hero { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; padding: 8px 0 4px; }
+.result-icon { width: 68px; height: 68px; border-radius: 50%; display: grid; place-items: center; border: 1px solid; }
+.result-icon.ok   { color: var(--success); border-color: rgba(47, 112, 80, 0.35); background: var(--success-bg); }
+.result-icon.fail { color: var(--danger);  border-color: rgba(178, 67, 58, 0.35); background: var(--danger-bg); }
+
+/* ── Boleto público ─────────────────────────────────────── */
+.public-screen { min-height: 100vh; display: flex; flex-direction: column; align-items: center; gap: 28px; padding: 40px 16px 56px; }
+.public-screen > * { position: relative; }
+.public-card { width: min(420px, 100%); }
+.public-screen .muted { color: #a3a3a8; }
+.public-screen .public-card > .state { color: #a3a3a8; }
+.public-screen .public-card > .state .spinner { border-color: rgba(255, 255, 255, 0.15); border-top-color: var(--gold); }

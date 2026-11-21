@@ -1,0 +1,154 @@
+/* =========================================================
+   Acabado: profundidad, textura y movimiento (solo B/N)
+   ========================================================= */
+
+/* ── Lienzo con retícula de puntos ──────────────────────── */
+body {
+  background-color: var(--bg);
+  background-image: radial-gradient(rgba(0, 0, 0, 0.10) 1px, transparent 1.3px);
+  background-size: 24px 24px;
+}
+
+/* ── Hero: encabezado negro con haz de faro ─────────────── */
+.hero {
+  position: relative; isolation: isolate; overflow: hidden;
+  padding: 44px 48px; margin-bottom: 28px; border-radius: 28px;
+  background: #0b0b0c; color: var(--text);
+  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.55);
+  align-items: flex-end;
+}
+.hero::before {
+  /* haz de luz + retícula que se desvanece hacia el texto */
+  content: ""; position: absolute; inset: 0; z-index: -2; pointer-events: none;
+  background:
+    conic-gradient(from 196deg at 86% -18%, transparent 0deg, rgba(255, 255, 255, 0.20) 7deg, rgba(255, 255, 255, 0.07) 20deg, rgba(255, 255, 255, 0.015) 32deg, transparent 40deg),
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px) 0 0 / 44px 44px,
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px) 0 0 / 44px 44px;
+  -webkit-mask-image: linear-gradient(95deg, transparent 18%, #000 78%);
+  mask-image: linear-gradient(95deg, transparent 18%, #000 78%);
+}
+.hero::after {
+  /* faro de línea fina como marca de agua */
+  content: ""; position: absolute; z-index: -1; pointer-events: none;
+  right: 4%; top: 50%; width: 190px; height: 285px; transform: translateY(-50%);
+  opacity: 0.16;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 48' fill='none' stroke='white' stroke-width='.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 42 12 19h8l2 23z'/%3E%3Cpath d='M8.5 19h15'/%3E%3Crect x='13' y='12' width='6' height='7'/%3E%3Cpath d='m12 12 4-5 4 5z'/%3E%3Cpath d='M16 7V4'/%3E%3Cpath d='M10.6 28h10.8M10.1 35h11.8M7 42h18'/%3E%3Cpath d='M9 14H5M23 14h4M9.5 9.5l-3-2M22.5 9.5l3-2'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.hero .hero-text { position: relative; max-width: 640px; }
+.hero .eyebrow { color: #a3a3a8; }
+.hero .eyebrow::before { background: #fff; box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.12); }
+.hero h1 { color: #fff; font-size: clamp(2rem, 4.2vw, 3rem); letter-spacing: -0.045em; line-height: 1.04; margin-top: 14px; }
+.hero .sub { color: #a3a3a8; margin-top: 12px; font-size: 1rem; }
+.hero .actions { position: relative; z-index: 1; }
+.hero .select { min-width: 190px; background-color: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.2); backdrop-filter: blur(6px); }
+.hero .btn-ghost { background: rgba(255, 255, 255, 0.07); border-color: rgba(255, 255, 255, 0.22); color: #fff; backdrop-filter: blur(6px); }
+.hero .btn-ghost:hover:not(:disabled) { background: rgba(255, 255, 255, 0.14); border-color: rgba(255, 255, 255, 0.4); }
+.hero .btn-primary { background: #fff; color: #0b0b0c; }
+.hero .btn-primary:hover:not(:disabled) { background: #e8e8e8; }
+
+@media (max-width: 900px) {
+  .hero { padding: 30px 26px; border-radius: 22px; }
+  .hero::after { width: 120px; height: 180px; right: 6%; opacity: 0.12; }
+  .hero h1 { font-size: 1.85rem; }
+}
+
+/* ── Tarjetas con profundidad ───────────────────────────── */
+.card { box-shadow: var(--shadow-sm), 0 14px 30px -20px rgba(0, 0, 0, 0.22); }
+.card-flush { box-shadow: var(--shadow-sm), 0 18px 40px -26px rgba(0, 0, 0, 0.28); }
+
+/* bloques negros con brillo en la esquina */
+.card.on-ink,
+.card.stat.on-ink {
+  background: radial-gradient(120% 90% at 100% 0%, rgba(255, 255, 255, 0.13), transparent 55%), #0b0b0c;
+  box-shadow: 0 22px 44px -24px rgba(0, 0, 0, 0.6);
+}
+.card.on-ink.card-hover:hover { box-shadow: 0 28px 54px -22px rgba(0, 0, 0, 0.7); }
+
+/* tiles claros con degradado sutil */
+.card.stat:not(.on-ink) { background: linear-gradient(160deg, #ffffff 0%, #f0f0f0 100%); border: 1px solid var(--line); }
+
+/* ── Métricas con icono ─────────────────────────────────── */
+.stat { gap: 18px; }
+.stat-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.stat-icon {
+  width: 36px; height: 36px; flex: none; display: grid; place-items: center; border-radius: 11px;
+  background: #0b0b0c; color: #fff;
+}
+.stat.on-ink .stat-icon { background: #fff; color: #0b0b0c; }
+.stat .value { font-size: 2.35rem; letter-spacing: -0.045em; }
+.stat.on-ink .label::before { display: none; }
+
+/* ── Chips de tipo: estado y acción claros ──────────────── */
+.chip.is-off { opacity: 1; background: var(--surface-2); color: var(--text-faint); }
+.chip-note { font-size: 0.68rem; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-faint); }
+.chip button.chip-activate {
+  width: auto; height: 24px; padding: 0 10px; gap: 5px; display: inline-flex; align-items: center; border-radius: 999px;
+  background: var(--ink); color: var(--on-ink); font-size: 0.72rem; font-weight: 500;
+}
+.chip button.chip-activate:hover { background: var(--ink-hover); color: var(--on-ink); }
+
+/* ── Boleto con foto de fondo ───────────────────────────── */
+.ticket-card {
+  color: #fff; border-color: rgba(255, 255, 255, 0.14);
+  background: #0b0b0c;
+  box-shadow: 0 30px 60px -28px rgba(0, 0, 0, 0.7);
+}
+/* la foto vive en la parte superior y se funde con el negro hacia el QR */
+.ticket-card .ticket-top {
+  padding-top: 250px; text-shadow: 0 2px 14px rgba(0, 0, 0, 0.6);
+  background:
+    linear-gradient(180deg, rgba(11, 11, 12, 0.04) 0%, rgba(11, 11, 12, 0.12) 42%, rgba(11, 11, 12, 0.82) 72%, #0b0b0c 100%),
+    url("/ticket-bg.jpg") center top / cover no-repeat;
+}
+.ticket-card .badge-success { background: #fff; color: #0b0b0c; }
+.ticket-card .badge-danger { background: rgba(255, 255, 255, 0.14); color: #fff; }
+.ticket-card .ticket-title { color: #fff; }
+.ticket-card .eyebrow { color: #d4d4d8; }
+.ticket-card .ticket-meta, .ticket-card .ticket-meta a { color: #d4d4d8; }
+.ticket-card .ticket-tear { background-image: linear-gradient(90deg, rgba(255, 255, 255, 0.35) 50%, transparent 0); }
+.ticket-card .ticket-code { color: #fff; }
+.ticket-card .ticket-info .k { color: #a3a3a8; }
+.ticket-card .ticket-info .v { color: #fff; }
+.ticket-card .qr-frame { border-color: transparent; box-shadow: 0 14px 34px -12px rgba(0, 0, 0, 0.7); }
+
+/* ── Secciones ──────────────────────────────────────────── */
+.section-title::after { content: ""; order: 2; flex: 1; height: 1px; background: linear-gradient(90deg, var(--line-strong), transparent); }
+.section-title .actions { order: 3; margin-left: 0; }
+.section-title h2 { font-size: 1.45rem; letter-spacing: -0.035em; }
+
+/* ── Tablas ─────────────────────────────────────────────── */
+.table tbody tr:hover td:first-child { box-shadow: inset 3px 0 0 var(--ink); }
+.table td { white-space: nowrap; padding-left: 16px; padding-right: 16px; }
+.table th { padding-left: 16px; padding-right: 16px; }
+.table th:first-child, .table td:first-child { padding-left: 22px; }
+.table th:last-child, .table td:last-child { padding-right: 22px; }
+
+/* ── Ranking ────────────────────────────────────────────── */
+.rank-pos {
+  display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%;
+  border: 1px solid var(--line-strong); font-size: 0.74rem; color: var(--text-muted); background: var(--surface);
+}
+.rank-row:first-child .rank-pos { background: var(--ink); color: var(--on-ink); border-color: var(--ink); }
+
+/* ── Gráfico ────────────────────────────────────────────── */
+.bars .bar > span { background: linear-gradient(180deg, #0b0b0c 0%, #46464a 100%); border-radius: 6px 6px 0 0; }
+.bars .bar.is-zero > span { background: var(--surface-3); }
+
+/* ── Navegación ─────────────────────────────────────────── */
+.pillnav { box-shadow: 0 8px 24px -14px rgba(0, 0, 0, 0.3); }
+.pillnav a.active { box-shadow: 0 6px 14px -6px rgba(0, 0, 0, 0.5); }
+.topnav { box-shadow: 0 1px 0 var(--line), 0 14px 30px -26px rgba(0, 0, 0, 0.4); }
+
+/* ── Botones ────────────────────────────────────────────── */
+.btn-primary { box-shadow: 0 8px 18px -10px rgba(0, 0, 0, 0.6); }
+.btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 12px 22px -10px rgba(0, 0, 0, 0.6); }
+.on-ink .btn-primary { box-shadow: none; }
+
+/* ── Entrada suave de cada bloque ───────────────────────── */
+@keyframes lumen-rise { from { opacity: 0; transform: translateY(14px); } }
+.main-inner > * { animation: lumen-rise 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.main-inner > *:nth-child(2) { animation-delay: 0.06s; }
+.main-inner > *:nth-child(3) { animation-delay: 0.12s; }
+.main-inner > *:nth-child(4) { animation-delay: 0.18s; }
+.main-inner > *:nth-child(5) { animation-delay: 0.24s; }
+.main-inner > *:nth-child(n + 6) { animation-delay: 0.3s; }

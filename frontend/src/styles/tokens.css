@@ -1,0 +1,86 @@
+/* =========================================================
+   LUMEN — Design tokens
+   Blanco y negro. Grises neutros, mucho aire, sin color de
+   acento: la jerarquía la dan el contraste y el espacio.
+   ========================================================= */
+:root {
+  /* Lienzo y superficies */
+  --bg:          #fafafa;
+  --bg-soft:     #fcfcfc;
+  --surface:     #ffffff;
+  --surface-2:   #f2f2f2;   /* tile suave */
+  --surface-3:   #e5e5e5;
+
+  /* Negro */
+  --ink:         #0b0b0c;
+  --ink-2:       #151516;
+  --ink-hover:   #2a2a2c;
+  --on-ink:      #fafafa;
+
+  /* "Acento": ahora es el propio negro (se mantienen los nombres para no tocar componentes) */
+  --gold:        #0b0b0c;
+  --gold-bright: #ffffff;
+  --gold-ink:    #0b0b0c;
+  --gold-wash:   rgba(11, 11, 12, 0.05);
+
+  /* Texto */
+  --text:        #0b0b0c;
+  --text-muted:  #5e5e62;
+  --text-faint:  #8f8f94;
+
+  /* Líneas */
+  --line:        rgba(11, 11, 12, 0.08);
+  --line-strong: rgba(11, 11, 12, 0.16);
+
+  /* Estados (únicos colores, apagados y solo funcionales) */
+  --success:     #2f6b4a;
+  --success-bg:  rgba(47, 107, 74, 0.09);
+  --danger:      #b2433a;
+  --danger-bg:   rgba(178, 67, 58, 0.08);
+  --warning:     #8a6a24;
+  --warning-bg:  rgba(138, 106, 36, 0.09);
+
+  /* Tipografía: Cinzel solo para el logotipo */
+  --font-brand: "Cinzel", "Trajan Pro", Georgia, serif;
+  --font-body: "Inter Variable", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-body);
+
+  /* Forma */
+  --radius-sm: 10px;
+  --radius:    14px;
+  --radius-lg: 20px;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow:    0 18px 50px rgba(0, 0, 0, 0.18);
+  --ring:      0 0 0 3px rgba(11, 11, 12, 0.10);
+
+  /* Layout */
+  --content-max: 1180px;
+  --header-h: 68px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Bloque negro: reasigna los tokens para que todo lo de adentro se lea sobre oscuro */
+.on-ink {
+  --text:        #fafafa;
+  --text-muted:  #a3a3a8;
+  --text-faint:  #78787d;
+  --line:        rgba(255, 255, 255, 0.10);
+  --line-strong: rgba(255, 255, 255, 0.20);
+  --surface:     #151516;
+  --surface-2:   #202022;
+  --surface-3:   #2c2c2f;
+  --gold:        #ffffff;
+  --gold-ink:    #fafafa;
+  --gold-wash:   rgba(255, 255, 255, 0.08);
+  --ring:        0 0 0 3px rgba(255, 255, 255, 0.18);
+  --success:     #8ed1a9;
+  --success-bg:  rgba(142, 209, 169, 0.14);
+  --danger:      #f0948a;
+  --danger-bg:   rgba(240, 148, 138, 0.14);
+  --warning:     #e0c68f;
+  --warning-bg:  rgba(224, 198, 143, 0.14);
+  --ink:         #fafafa;
+  --on-ink:      #0b0b0c;
+  background: #0b0b0c;
+  color: var(--text);
+}
