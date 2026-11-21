@@ -204,7 +204,7 @@ function UserForm({ user, isSelf, onClose, onSaved }: { user?: User; isSelf: boo
         <Field label="Comisión (%)" hint={rol === "RP" ? "Sobre el precio de cada boleto vendido" : "Solo aplica a RPs"}>
           {(id) => <input id={id} className="input" type="number" min={0} max={100} step="0.01" value={comision} onChange={(e) => setComision(e.target.value)} disabled={rol !== "RP"} />}
         </Field>
-        <Field label={user ? "Nueva contraseña" : "Contraseña"} hint={user ? "Déjala vacía para conservar la actual" : "Mínimo 8 caracteres"} className="span-2">
+        <Field label={user ? "Nueva contraseña" : "Contraseña"} hint={user ? "Déjala vacía para conservar la actual" : "Mínimo 12 caracteres, sin claves comunes ni el usuario"} className="span-2">
           {(id) => <input id={id} className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" />}
         </Field>
       </form>

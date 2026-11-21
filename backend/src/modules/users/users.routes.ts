@@ -3,6 +3,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { query, queryOne } from "../../db/pool.js";
 import { AppError } from "../../lib/errors.js";
+import { BCRYPT_ROUNDS, PASSWORD_MAX, weakPasswordReason } from "../../lib/password.js";
 import { parse, parseId } from "../../lib/validate.js";
 import { authenticate, requireRole } from "../../middleware/auth.js";
 import { ROLES, USER_COLUMNS, type Usuario } from "./users.types.js";
@@ -18,19 +19,25 @@ const usernameSchema = z
   .max(60)
   .regex(/^[a-zA-Z0-9._-]+$/, "Solo letras, números, punto, guion y guion bajo");
 
-const passwordSchema = z
-  .string()
-  .min(8, "La contraseña debe tener al menos 8 caracteres")
-  .max(100);
+// La política completa (largo, claves comunes, usuario dentro de la clave) se aplica en superRefine.
+const passwordSchema = z.string().max(PASSWORD_MAX, `La contraseña no puede pasar de ${PASSWORD_MAX} caracteres`);
 
-const createSchema = z.object({
-  nombre_completo: z.string().trim().min(2, "Ingresa el nombre completo").max(120),
-  telefono: z.string().trim().max(20).default(""),
-  username: usernameSchema,
-  password: passwordSchema,
-  rol: z.enum(ROLES),
-  comision_porcentaje: z.coerce.number().min(0).max(100).default(10),
-});
+function checkPassword(data: { password?: string; username?: string }, ctx: z.RefinementCtx) {
+  if (data.password === undefined) return;
+  const reason = weakPasswordReason(data.password, data.username);
+  if (reason) ctx.addIssue({ code: "custom", path: ["password"], message: reason });
+}
+
+const createSchema = z
+  .object({
+    nombre_completo: z.string().trim().min(2, "Ingresa el nombre completo").max(120),
+    telefono: z.string().trim().max(20).default(""),
+    username: usernameSchema,
+    password: passwordSchema,
+    rol: z.enum(ROLES),
+    comision_porcentaje: z.coerce.number().min(0).max(100).default(10),
+  })
+  .superRefine(checkPassword);
 
 const updateSchema = z
   .object({
@@ -41,7 +48,8 @@ const updateSchema = z
     rol: z.enum(ROLES),
     comision_porcentaje: z.coerce.number().min(0).max(100),
   })
-  .partial();
+  .partial()
+  .superRefine(checkPassword);
 
 usersRouter.get("/", async (req, res) => {
   const rol = req.query.rol ? parse(z.enum(ROLES), String(req.query.rol).toUpperCase()) : null;
@@ -62,7 +70,7 @@ usersRouter.get("/:id", async (req, res) => {
 
 usersRouter.post("/", async (req, res) => {
   const data = parse(createSchema, req.body);
-  const hash = await bcrypt.hash(data.password, 10);
+  const hash = await bcrypt.hash(data.password, BCRYPT_ROUNDS);
 
   const exists = await queryOne(`SELECT 1 FROM usuarios WHERE lower(username) = lower($1)`, [data.username]);
   if (exists) throw AppError.conflict("Ese nombre de usuario ya está en uso");
@@ -92,8 +100,16 @@ usersRouter.put("/:id", async (req, res) => {
     if (clash) throw AppError.conflict("Ese nombre de usuario ya está en uso");
   }
 
-  const hash = data.password ? await bcrypt.hash(data.password, 10) : null;
+  // Si cambian la clave sin mandar el usuario, se compara contra el usuario actual de la cuenta.
+  if (data.password && !data.username) {
+    const current = await queryOne<{ username: string }>(`SELECT username FROM usuarios WHERE id = $1`, [id]);
+    const reason = current ? weakPasswordReason(data.password, current.username) : null;
+    if (reason) throw AppError.badRequest(reason);
+  }
 
+  const hash = data.password ? await bcrypt.hash(data.password, BCRYPT_ROUNDS) : null;
+
+  // Cambiar la clave cierra las sesiones abiertas de esa cuenta y quita cualquier bloqueo.
   const user = await queryOne<Usuario>(
     `UPDATE usuarios SET
         nombre_completo     = COALESCE($2, nombre_completo),
@@ -101,7 +117,10 @@ usersRouter.put("/:id", async (req, res) => {
         username            = COALESCE($4, username),
         password_hash       = COALESCE($5, password_hash),
         rol                 = COALESCE($6::rol_usuario, rol),
-        comision_porcentaje = COALESCE($7, comision_porcentaje)
+        comision_porcentaje = COALESCE($7, comision_porcentaje),
+        sesiones_validas_desde = CASE WHEN $5::text IS NULL THEN sesiones_validas_desde ELSE now() END,
+        intentos_fallidos      = CASE WHEN $5::text IS NULL THEN intentos_fallidos ELSE 0 END,
+        bloqueado_hasta        = CASE WHEN $5::text IS NULL THEN bloqueado_hasta ELSE NULL END
       WHERE id = $1
       RETURNING ${USER_COLUMNS}`,
     [

@@ -6,6 +6,7 @@
 import bcrypt from "bcryptjs";
 import { env } from "../src/config/env.js";
 import { pool, query, queryOne } from "../src/db/pool.js";
+import { BCRYPT_ROUNDS, weakPasswordReason } from "../src/lib/password.js";
 import { sellTicket } from "../src/modules/tickets/tickets.service.js";
 
 const withDemo = process.argv.includes("--demo");
@@ -25,7 +26,7 @@ async function ensureUser(opts: {
     console.log(`  · ${opts.rol.padEnd(7)} ${opts.username} (ya existía)`);
     return existing.id;
   }
-  const hash = await bcrypt.hash(opts.password, 10);
+  const hash = await bcrypt.hash(opts.password, BCRYPT_ROUNDS);
   const row = await queryOne<{ id: number }>(
     `INSERT INTO usuarios (nombre_completo, telefono, username, password_hash, rol, comision_porcentaje)
      VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
@@ -38,8 +39,13 @@ async function ensureUser(opts: {
 async function main() {
   console.log("[lumen] Sembrando datos…");
 
-  if (!env.ADMIN_PASSWORD || env.ADMIN_PASSWORD.length < 8) {
-    throw new Error("Define ADMIN_PASSWORD (mínimo 8 caracteres) en backend/.env antes de ejecutar el seed.");
+  if (!env.ADMIN_PASSWORD) {
+    throw new Error("Define ADMIN_PASSWORD en backend/.env antes de ejecutar el seed.");
+  }
+  // El admin demo de desarrollo no se valida; el real sí: mismas reglas que la API.
+  const weak = weakPasswordReason(env.ADMIN_PASSWORD, env.ADMIN_USERNAME);
+  if (weak && !withDemo) {
+    throw new Error(`ADMIN_PASSWORD no es válida: ${weak}.`);
   }
   await ensureUser({
     nombre: env.ADMIN_NAME,

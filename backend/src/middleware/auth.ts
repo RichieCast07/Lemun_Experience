@@ -8,6 +8,7 @@ import type { Rol } from "../modules/users/users.types.js";
 interface TokenPayload {
   sub: string;
   rol: Rol;
+  iat: number;
 }
 
 export function signToken(userId: number, rol: Rol): string {
@@ -30,7 +31,8 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
 
   let payload: TokenPayload;
   try {
-    payload = jwt.verify(token, env.JWT_SECRET) as unknown as TokenPayload;
+    // Solo HS256: evita que un token firmado con otro algoritmo sea aceptado.
+    payload = jwt.verify(token, env.JWT_SECRET, { algorithms: ["HS256"] }) as unknown as TokenPayload;
   } catch {
     throw AppError.unauthorized("Sesión inválida o expirada");
   }
@@ -42,14 +44,20 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
     rol: Rol;
     comision_porcentaje: number;
     activo: boolean;
+    sesiones_desde: number;
   }>(
-    `SELECT id, username, nombre_completo, rol, comision_porcentaje, activo
+    `SELECT id, username, nombre_completo, rol, comision_porcentaje, activo,
+            EXTRACT(EPOCH FROM sesiones_validas_desde)::float8 AS sesiones_desde
        FROM usuarios WHERE id = $1`,
     [Number(payload.sub)]
   );
 
   if (!user || !user.activo) {
     throw AppError.unauthorized("Usuario inexistente o desactivado");
+  }
+  // Un token emitido antes del último cambio de contraseña ya no vale.
+  if (typeof payload.iat !== "number" || payload.iat < Math.floor(user.sesiones_desde)) {
+    throw AppError.unauthorized("Sesión inválida o expirada");
   }
 
   req.user = {

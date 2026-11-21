@@ -95,6 +95,20 @@ ticketsRouter.get("/access/:eventId", requireRole("MANAGER", "ADMIN"), async (re
   res.json(await getAccessSummary(parseId(req.params.eventId, "evento")));
 });
 
+// Consulta/canje por código: tope por usuario (no por IP, porque el staff comparte wifi).
+// Un escáner humano no pasa de ~1 boleto por segundo; esto frena a quien intente adivinar códigos.
+ticketsRouter.use(
+  "/code",
+  rateLimit({
+    windowMs: 60 * 1000,
+    limit: 120,
+    standardHeaders: "draft-7",
+    legacyHeaders: false,
+    keyGenerator: (req) => `user:${req.user?.id ?? "anon"}`,
+    message: { error: "Demasiadas consultas de boletos. Espera un momento." },
+  })
+);
+
 ticketsRouter.get("/code/:codigo", async (req, res) => {
   const user = req.user!;
   const ticket = await getTicketByCode(String(req.params.codigo));

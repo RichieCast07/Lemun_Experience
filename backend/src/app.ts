@@ -1,5 +1,6 @@
 import cors from "cors";
 import express from "express";
+import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import { env } from "./config/env.js";
 import { pool } from "./db/pool.js";
@@ -26,6 +27,20 @@ export function createApp() {
     })
   );
   app.use(express.json({ limit: "100kb" }));
+
+  // Tope general por IP para toda la API (el salud del servicio no cuenta). Holgado a propósito:
+  // en un evento todo el staff comparte la misma wifi/IP.
+  app.use(
+    "/api",
+    rateLimit({
+      windowMs: 60 * 1000,
+      limit: 600,
+      standardHeaders: "draft-7",
+      legacyHeaders: false,
+      skip: (req) => req.path === "/health",
+      message: { error: "Demasiadas peticiones. Espera un momento e inténtalo de nuevo." },
+    })
+  );
 
   app.get("/api/health", async (_req, res) => {
     try {

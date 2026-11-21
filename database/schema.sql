@@ -28,6 +28,10 @@ CREATE TABLE IF NOT EXISTS usuarios (
   activo              BOOLEAN       NOT NULL DEFAULT TRUE,
   creado_en           TIMESTAMPTZ   NOT NULL DEFAULT now()
 );
+-- Seguridad de acceso: bloqueo temporal tras fallos seguidos y corte de sesiones al cambiar la contraseña.
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS intentos_fallidos INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS bloqueado_hasta TIMESTAMPTZ;
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS sesiones_validas_desde TIMESTAMPTZ NOT NULL DEFAULT 'epoch';
 CREATE UNIQUE INDEX IF NOT EXISTS uq_usuarios_username ON usuarios (lower(username));
 CREATE INDEX IF NOT EXISTS idx_usuarios_rol ON usuarios (rol);
 
